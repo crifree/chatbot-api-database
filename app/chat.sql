@@ -1,0 +1,8 @@
+CREATE DATABASE chatbot;
+USE chatbot;
+
+CREATE TABLE IF NOT EXISTS qa(
+      id INTEGER PRIMARY KEY AUTO_INCREMENT,
+      question TEXT NOT NULL,
+      answer TEXT NOT NULL
+);
