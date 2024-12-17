@@ -29,11 +29,11 @@ class connection:
             try:
                   self.cursor.execute(query, params)
 
-                  # Esegui il commit solo per query che modificano i dati
+                  # execute the commit just for data changing or inserting queries
                   if query.strip().upper().startswith(("INSERT", "UPDATE", "DELETE")):
                         self.conn.commit()
 
-                  # Ritorna i risultati solo per query di lettura
+                  # return results just for get data queries
                   if query.strip().upper().startswith("SELECT"):
                         return self.cursor.fetchall()           
             except Exception as e:

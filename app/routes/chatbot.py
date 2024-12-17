@@ -1,19 +1,19 @@
 from flask import Blueprint, jsonify, request
-from flask_cors import CORS  # Importa CORS
+from flask_cors import CORS 
 from difflib import get_close_matches
 import os
 import json
 from .conn import connection
 import logging
 
-logging.basicConfig(level=logging.DEBUG)  # Log di livello DEBUG e superiore
+logging.basicConfig(level=logging.DEBUG) 
 logger = logging.getLogger(__name__)
 
-# Blueprint per il chatbot
+# Blueprint for chatbot
 chatbot = Blueprint('chatbot', __name__)
-CORS(chatbot)  # Abilita CORS
+CORS(chatbot)  
 
-
+# find the best match between user's input and a list 
 def find_best_match(user_question: str, questions: list[str]) -> str | None:
       matches: list = get_close_matches(user_question, questions, n=1, cutoff=0.6)
       return matches[0] if matches else None
@@ -21,13 +21,15 @@ def find_best_match(user_question: str, questions: list[str]) -> str | None:
 
 @chatbot.route('/chatbot', methods=['post'])
 def chat_bot():
-
+      
+      #get the user's input
       user_input: str = request.json.get('message', '')
 
       if not user_input:
             return jsonify({'error': 'No message provided'}), 400
 
       try:
+            #connecting to database
             db = connection()
             db.openConn()
 
@@ -37,18 +39,19 @@ def chat_bot():
 
             if not results:
                   db.closeConn()
-                  logger.debug('suca')
                   return jsonify({
                   'response': "I don't know the answer. Can you teach me? Or you can say skip to skip learning!",
                   'learn': True
                   })
 
+            #creating a list of questions and a dictonary of both questions and answers
             questions = [q[0] for q in results]
             qa_dict = {row[0]: row[1] for row in results}
 
             best_match = find_best_match(user_input, questions)
 
             if best_match:
+                  #get the value based on best_match
                   answer = qa_dict.get(best_match)
                   db.closeConn()
                   return jsonify({'response': answer})
@@ -60,7 +63,12 @@ def chat_bot():
                   })
 
       except Exception as e:
-            print(f'errore durante la connessione {e}')           
+            return jsonify({'response': f'An unexpected error occurred: {e}'}), 500
+
+      finally:
+            if db is not None:
+                  db.closeConn()
+
 
 
 @chatbot.route('/teach', methods=['POST'])
